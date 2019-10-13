@@ -69,4 +69,4 @@ def export():
             return Response('Wybór był pusty!', status=406)
 
 if __name__ == '__main__':
-    app.run( debug = True)
+    app.run( debug = False)
