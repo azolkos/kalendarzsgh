@@ -1,1 +1,1 @@
-web: gunicorn kalendarz:KalendarzSGH
+web gunicorn kalendarz:kalendarzsgh
