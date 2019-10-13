@@ -1,1 +1,1 @@
-web gunicorn kalendarz:app
+web: gunicorn kalendarz:app
