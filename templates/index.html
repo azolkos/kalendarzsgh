@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="Description" content="Importuj harmonogram zajęć SGH do Google Calendar" />
+	<meta name="Keywords" content="sgh, harmonogram, zajęć, kalendarz" />
+	<meta http-equiv="Content-Language" content="pl" />
+	<meta name="Author" content="Artur Żółkoś" />
+	<meta http-equiv="Creation-Date" content="Sun, 12 Oct 2019 12:35:19 GMT" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="/static/img/favicon.jpg" type="image/png">
+
+	<!-- External CSS -->
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+	<!-- jQuery -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+	<title>Kalendarz SGH</title>
+</head>
+<body class="w3-theme-l4">
+
+	<!-- HEADER -->
+	<div class="w3-bar w3-large w3-teal">
+		<span class="w3-bar-item">Kalendarz SGH</span>
+	</div>
+
+	<!-- CONTENT -->
+	<div class="w3-container w3-content">
+
+		<div class="w3-panel w3-white w3-display-container">
+			<h2 class="w3-text-teal">Konwerter harmonogramu zajęć SGH do Google Calendar</h2>
+		</div>
+
+		<div class="w3-panel w3-white w3-card w3-display-container">
+			
+			<!-- Pipeline -->
+			<div class="w3-bar">
+					<h1 class="w3-bar-item w3-center w3-text-teal" style="width: 33.3%;">1</h1>
+					<h1 class="w3-bar-item w3-center w3-text-teal" style="width: 33.3%;">2</h1>
+					<h1 class="w3-bar-item w3-center w3-text-teal" style="width: 33.3%;">3</h1>
+			</div>
+			<div class="w3-bar">
+				<p class="w3-bar-item w3-center w3-text-teal" style="width: 33.3%; padding-top: 0; margin-top: 0;">Wybór pliku</p>
+				<p class="w3-bar-item w3-center w3-text-teal" style="width: 33.3%; padding-top: 0; margin-top: 0;">Wybór zajęć</p>
+				<p class="w3-bar-item w3-center w3-text-teal" style="width: 33.3%; padding-top: 0; margin-top: 0;">Eksport do csv</p>
+			</div>
+			<div class="w3-bar">
+					<span class="w3-bar-item w3-center" style="width: 33.3%;"><button class="w3-button w3-teal">{{ filename }}</button></span>
+					<span class="w3-bar-item w3-center" style="width: 33.3%;"><button class="w3-button w3-teal" id="btn_correct" style="display: none;" onclick="unfoldsearch()">Popraw wybór</button></span>
+					<span class="w3-bar-item w3-center" style="width: 33.3%;"><button class="w3-button w3-teal" id="btn_export" style="display: none;" onclick="convertToCsv()">Eksportuj do Google Calendar csv</button></span>
+			</div>
+			
+			<!-- Wyszukiwarka -->
+			<div id="search">
+				<p class="w3-text-teal"><b>Wybierz zajęcia z listy</b> (obecnie wybranych masz: <span id="countertext">0</span> zajęć)</p>
+				<div class="w3-bar">
+					<input id="ipt_search" class="w3-bar-item w3-input w3-border w3-padding" style="width:70%" type="text" placeholder="Wyszukuj po sygnaturze lub nazwie przedmiotu.." onkeyup="lookup()">
+					<button id="btn_search" class="w3-bar-item w3-button w3-border w3-teal" style="width:20%" type="button" onclick="foldsearch()">Zatwierdź wybór</button>
+					<button id="btn_clear" class="w3-bar-item w3-button w3-border w3-teal" style="width:10%" type="button" onclick="unselect()">Wyczyść</button>
+				</div>
+				<table id="tbl_zajecia" class="w3-table-all w3-margin-top w3-margin-bottom">
+				<tr>
+						<th style="width:15%;">Sygnatura</th>
+						<th style="width:45%;">Nazwa przedmiotu</th>
+						<th style="width:25%;">Prowadzący</th>
+						<th style="width:10%">Forma</th>
+						<th style="width:5%;">Grupa</th>
+						<th></th>
+				</tr>
+				{% for x in data_array %}
+				<tr>
+					<td>{{ x[9] }}</td>
+					<td>{{ x[10] }}</td>
+					<td>{{ x[1] }}</td>
+					<td>{{ x[2] }}</td>
+					<td>{{ x[6] }}</td>
+					<td><input id="{{ x[11] }}" class="w3-check" type="checkbox" onchange="setcounter(this)"></td>
+				</tr>
+				{% endfor %}
+				</table>
+			</div>
+			
+			<!-- Potwierdzenie -->
+			<div id="result" style="display: none;">
+				<p class="w3-text-teal"><b>Wybrano następujące zajęcia</b></p>
+				<table class="w3-table-all w3-margin-top w3-margin-bottom" id="tbl_result">
+					<tr>
+						<th style="width:15%;">Sygnatura</th>
+						<th style="width:45%;">Nazwa przedmiotu</th>
+						<th style="width:25%;">Prowadzący</th>
+						<th style="width:10%">Forma</th>
+						<th style="width:5%;">Grupa</th>
+					</tr>
+					{% for x in data_array %}
+					<tr>
+						<td>{{ x[9] }}</td>
+						<td>{{ x[10] }}</td>
+						<td>{{ x[1] }}</td>
+						<td>{{ x[2] }}</td>
+						<td>{{ x[6] }}</td>
+					</tr>
+					{% endfor %}
+				</table>
+			</div>
+
+		</div>
+
+	</div>
+
+<script>
+	function lookup() {
+		var input, filter, table, tr, sygnatura, nazwa, i;
+		input = document.getElementById("ipt_search");
+		filter = input.value.toUpperCase();
+		table = document.getElementById("tbl_zajecia");
+		tr = table.getElementsByTagName("tr");
+		for (i = 0; i < tr.length; i++) {
+			sygnatura = tr[i].getElementsByTagName("td")[0];
+			nazwa = tr[i].getElementsByTagName("td")[1];
+			if (sygnatura || nazwa) {
+				sygV = sygnatura.textContent || sygnatura.innerText;
+				nazV = nazwa.textContent || nazwa.innerText;
+				if (sygV.toUpperCase().indexOf(filter) > -1 || nazV.toUpperCase().indexOf(filter) > -1) {
+					tr[i].style.display = "";
+				} else {
+					tr[i].style.display = "none";
+				}
+			}
+		}
+	}
+
+	function foldsearch() {
+		document.getElementById("search").style.display = "none";
+		document.getElementById("result").style.display = "";
+		document.getElementById("btn_correct").style.display = "";
+		document.getElementById("btn_export").style.display = "";
+
+		resultset = document.getElementById("tbl_result");
+		tr = resultset.getElementsByTagName("tr");
+		for (i = 0; i < tr.length-1; i++) {
+			checkbox = document.getElementById(i);
+			if (checkbox.checked) {
+				tr[i+1].style.display = "";
+			} else {
+				tr[i+1].style.display = "none";
+			}
+		}
+
+	}
+
+	function unfoldsearch() {
+		document.getElementById("search").style.display = "";
+		document.getElementById("result").style.display = "none";
+		document.getElementById("btn_correct").style.display = "none";
+		document.getElementById("btn_export").style.display = "none";
+
+		document.getElementById("ipt_search").value = "";
+		lookup();
+	}
+
+	function unselect() {
+		table = document.getElementById("tbl_zajecia");
+		tr = table.getElementsByTagName("tr");
+		for (i = 0; i < tr.length-1; i++) {
+			document.getElementById(i).checked = false;
+		}
+		document.getElementById("countertext").innerHTML = 0;
+	}
+
+	function setcounter(checkbox) {
+		if (checkbox.checked) {
+			document.getElementById("countertext").innerHTML++;
+		} else {
+			document.getElementById("countertext").innerHTML--;
+		}
+	}
+
+	function convertToCsv() {
+		var rows = [];
+		table = document.getElementById("tbl_zajecia");
+		tr = table.getElementsByTagName("tr"); 
+		for (i = 0; i < tr.length-1; i++) {
+			if ( document.getElementById(i).checked) {
+				rows.push(i);
+			}
+		}
+		//console.log(rows)
+		$.ajax({
+			url: "export",
+			type: "POST",
+			data: {"rows": rows},
+			success: function(data) {
+				var blob = new Blob([data]);
+				var link = document.createElement('a');
+				link.href = window.URL.createObjectURL(blob);
+				link.download="harmonogram.csv";
+				link.click();
+			},
+			error: function() {
+				alert("Wybór był niepoprawny!");
+			}
+		});
+	}
+</script>
+
+</body>
+
+</html>
