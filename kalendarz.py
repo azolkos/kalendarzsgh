@@ -1,7 +1,12 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, url_for, redirect
 import os, pandas as pd, numpy as np
 
 app = Flask( __name__)
+
+@app.route( '/favicon.ico')
+def favicon():
+    return redirect( url_for( 'static', filename='favicon.ico'))
+
 PATH = 'harmonogramy/MGR'
 SMMD = 'harmonogram zajec SD_NP 19_20 zima 7_10_2019.xlsx'
 
